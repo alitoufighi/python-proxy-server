@@ -1,10 +1,15 @@
+# import ast
 import socket
 import errno
-import time
+# import time
 import sys
+import json
 import thread
-# from threading import Thread
+from email import send_mail
+
 PORT = int(sys.argv[1])
+CONFIG_FILENAME = 'config.json'
+CONFIG = {}
 
 
 class BadRequest(Exception):
@@ -14,7 +19,7 @@ class BadRequest(Exception):
 class HTTPRequest:
     def __init__(self, data):
         if data == '':
-            print("WHAT THE FUCK IS WRONG WITH YOU?")
+            print("WHAT IS WRONG WITH YOU?")
             raise BadRequest()
         data = data.split('\r\n')
         print(data)
@@ -33,7 +38,7 @@ class HTTPRequest:
                 self.headers[header_type] = header_value
 
         self.version = 'HTTP/1.0'
-        index = self.route.find(self.headers['Host']) + len(self.headers["Host"])
+        index = self.route.find(self.headers['Host']) + len(self.headers['Host'])
         self.route = self.route[index:]
         if self.route == '':
             self.route = '/'
@@ -52,55 +57,23 @@ class HTTPRequest:
         return result
 
 
-# class TCPSocket:
-#     def __init__(self, port=None):
-#         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#         if port is not None:
-#             self.socket.bind(port)
-#
-#     def recv_all(self):
+# class SocketTools(object):
+#     @staticmethod
+#     def recv_all(sock):
 #         rcv_data = ''
 #         while True:
-#             data = self.socket.recv(2048)
+#             data = sock.recv(2048)
 #             if not data:
 #                 break
 #             rcv_data += data
 #         return rcv_data
 
 
-class SocketTools:
-
-    @staticmethod
-    def recv_all(sock):
-        rcv_data = ''
-        while True:
-            data = sock.recv(2048)
-            if not data:
-                break
-            rcv_data += data
-        return rcv_data
-
-
 class ClientThread(object):
-    # def __init__(self):
-    #     pass
-        # self.socket = s
-
     @staticmethod
     def run(sock):
         try:
-            # print("HERE1")
             request_data = sock.recv(2048)
-            # request_data = ''
-            # while True:
-            #     data = self.socket.recv(2048)
-            #     if not data:
-            #         break
-            #     request_data += data
-            # request_data = SocketTools.recv_all(self.socket)
-            # print("_______________{0}_______________".format(request_data))
-            # print()
-            # print("______________________________")
             try:
                 req = HTTPRequest(request_data)
             except BadRequest:
@@ -108,11 +81,16 @@ class ClientThread(object):
                 return
 
             host = req.get_headers()['Host']
+
+            if HTTPProxyServer.is_in_disallowed_hosts(host):  # send email to administrator
+                print("SENDING EMAIL!")
+                send_mail().snd_email()
+                sock.close()
+                return
+
             new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             new_socket.connect((host, 80))
-            # print("HERE2")
             new_socket.send(req.join_string().encode())
-            # print("HERE3")
 
             # received_data = SocketTools.recv_all(new_socket)
             received_data = ''
@@ -121,16 +99,14 @@ class ClientThread(object):
                     data = new_socket.recv(2048)
                 except socket.error as e:
                     if e.errno != errno.ECONNRESET:
-                        raise  # Not error we are looking for
-                    break  # Handle error here.
+                        raise
+                    break
                 if not data:
                     break
                 received_data += data
 
             new_socket.close()
-            # print("HERE4")
             sock.sendall(received_data)
-            # print("HERE5")
         except socket.timeout:
             print("---SOCKET TIMEOUT---")
         sock.close()
@@ -142,15 +118,32 @@ class HTTPProxyServer:
         self.socket.bind(('127.0.0.1', PORT))
         self.socket.listen(64)
 
+    @staticmethod
+    def read_config():
+        global CONFIG
+        with open(CONFIG_FILENAME) as f:
+            CONFIG = json.load(f)
+        print(CONFIG)
+
+    @staticmethod
+    def is_in_disallowed_hosts(host):
+        print("-LOOKING FOR {0} IN TARGETS".format(host))
+        restriction = CONFIG['restriction']
+        if restriction['enable'] is not True:
+            return False
+        targets = restriction['targets']
+        for target in targets:
+            print(target)
+            if host in target['URL'] and target['notify'] == 'true':
+                return True
+        return False
+
     def run(self):
         while True:
             (client_socket, address) = self.socket.accept()
-            # print("NEW CONNECTION")
             thread.start_new_thread(ClientThread.run, (client_socket,))
-            # ct = ClientThread(client_socket)
-            # ct.run()
-            # time.sleep(0.1)
 
 
+HTTPProxyServer.read_config()
 proxy = HTTPProxyServer()
 proxy.run()
