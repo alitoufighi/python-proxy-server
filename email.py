@@ -61,8 +61,6 @@ class send_mail:
         self.quit_msg()
         
 
-
-
-
-email = send_mail()
-email.snd_email()
+if __name__ == '__main__':
+    email = send_mail()
+    email.snd_email()
