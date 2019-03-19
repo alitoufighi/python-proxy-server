@@ -3,12 +3,12 @@ import base64
 import time
 
 
-MAILSERVER = ("alt4.gmail-smtp-in.l.google.com", 25)
+MAILSERVER = ("alt2.aspmx.l.google.com", 25)
 HELOCOMMAND = 'HELO Maede\r\n'
-USERNAME = "maede.d.z@gmail.com\n"
+USERNAME = "maede.d.z\n"
 PASSWORD = "13770822md"
-MAILFROM = "MAIL FROM:<maede.d.z@gmail.com>\r\n"
-RCPTTO = "RCPT TO:<maede.77.dz@gmail.com>"
+MAILFROM = "MAIL FROM: <maede.d.z@gmail.com>\r\n"
+RCPTTO = "RCPT TO: <maede.77.dz@gmail.com>\r\n"
 DATA = "DATA\r\n"
 QUIT = "QUIT\r\n"
 
@@ -26,7 +26,7 @@ class send_mail:
         self.rcv_msg_print("helo: ")
 
     def auth(self):
-        auth_msg = "AUTHO LOGIN ".encode() + base64.b64encode(("\x00"+USERNAME+"\x00"+PASSWORD).encode()) + "\r\n".encode()
+        auth_msg = "AUTH LOGIN ".encode() + base64.b64encode((USERNAME+"\n"+PASSWORD).encode()) + "\n".encode()
         self.socket.send(auth_msg)
         self.rcv_msg_print("auth: ")
         
@@ -58,6 +58,17 @@ class send_mail:
         self.auth()
         self.rcpt_to()
         self.snd_data()
+        tmp = "Subject: testing my client\r\n\r\n" 
+        self.socket.send(tmp.encode())
+        date = time.strftime("%a, %d %b %Y %H:%M:%S +0000", time.gmtime())
+        date = date + "\r\n\r\n"
+        self.socket.send(date.encode())
+        msg =  "\r\n I love computer networks!"
+        endmsg = "\r\n.\r\n"
+        self.socket.send(msg.encode())
+        self.socket.send(endmsg.encode())
+        recv_msg = self.socket.recv(1024)
+        print("Response after sending message body:"+recv_msg.decode())
         self.quit_msg()
         
 
