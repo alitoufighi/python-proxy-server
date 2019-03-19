@@ -3,15 +3,15 @@ import socket
 import errno
 # import time
 import sys
-import json
-import thread
+# import json
+# import thread
 from email import send_mail
 from HTTPRequest import *
 
-DEBUG = True
+# DEBUG = True
 
-PORT = int(sys.argv[1]) if DEBUG else 8000
-CONFIG_FILENAME = 'config.json'
+# PORT = int(sys.argv[1]) if DEBUG else 8000
+# CONFIG_FILENAME = 'config.json'
 
 
 # class BadRequest(Exception):
@@ -71,7 +71,7 @@ CONFIG_FILENAME = 'config.json'
 #         return rcv_data
 
 
-class ClientThread(object):
+class HTTPRequestHandler(object):
     @staticmethod
     def run(proxy_server, sock):
         try:
@@ -88,7 +88,7 @@ class ClientThread(object):
                 # send email to administrator
                 print("SENDING EMAIL!")
                 sock.close()
-                send_mail().snd_email()
+                # send_mail().snd_email()
                 return
 
             new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -196,6 +196,3 @@ class ClientThread(object):
 #             thread.start_new_thread(ClientThread.run, (self, client_socket,))
 
 
-if __name__ == '__main__':
-    proxy = HTTPProxyServer()
-    proxy.run()
