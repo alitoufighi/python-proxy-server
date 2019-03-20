@@ -1,4 +1,3 @@
-import struct
 import sys
 import socket
 import json
@@ -17,13 +16,9 @@ class HTTPProxyServer:
         self.users = self.CONFIG['accounting']['users']
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         port = PORT if DEBUG else self.CONFIG['port']
-        # ip_addr = '127.0.0.1' if DEBUG else socket.gethostbyname(socket.gethostname())
-        # TODO: gethostbyname() doesn't return 127.0.0.1 (what to do?)
         ip_addr = '127.0.0.1'
-        # self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
-        #                        struct.pack('ii', 1, 0))
         self.socket.bind((ip_addr, port))
+        print("-Starting proxy server on {0}:{1}".format(ip_addr, port))
         self.socket.listen(64)
 
     def is_logging_enabled(self):
@@ -69,12 +64,16 @@ class HTTPProxyServer:
     def discharge_user(self, ip_addr, amount):
         for user in self.users:
             if user['IP'] == ip_addr:
-                print("--user found! DISCHARGING {0} KILOBYTES".format(amount))
                 user['volume'] = int(user['volume']) - amount
-                print("--NEW HAJM: {0}".format(user['volume']))
                 return
         else:
-            print "NO USER FOUND?!?!"
+            print "NO USER FOUND!"
+
+    def has_charge(self, ip_addr):
+        for user in self.users:
+            if user['IP'] == ip_addr:
+                return int(user['volume']) > 0
+        return False
 
     @property
     def config(self):
@@ -97,8 +96,11 @@ class HTTPProxyServer:
         while True:
             (client_socket, (address, _)) = self.socket.accept()
             if not self.is_allowed_user(address):
-                print "-Refusing Connection! Disallowed User IP Address."
+                print("-Refusing Connection! Disallowed User IP Address.")
                 client_socket.close()
+                return
+            if not self.has_charge(address):
+                print("-Refusing Connection! User Has No Charge.")
                 return
             print "-Connection Established."
             thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))

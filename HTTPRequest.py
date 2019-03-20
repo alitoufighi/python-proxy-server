@@ -89,6 +89,7 @@ class IncomingHTTPRequest:
         i = self.route.find(self.headers['host']) + len(self.headers['host'])
         self.route = self.route[i:]
         if self.route == '':
+
             self.route = '/'
 
     def read(self):
@@ -101,3 +102,6 @@ class IncomingHTTPRequest:
     @property
     def length(self):
         return int(self.headers['content-length']) if 'content-length' in self.headers else 0
+
+    def set_header(self, key, val):
+        self.headers[key.lower()] = val.strip()
