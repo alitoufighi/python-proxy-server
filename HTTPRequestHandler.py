@@ -5,6 +5,7 @@ import errno
 import sys
 # import json
 # import thread
+from HTTPResponse import HTTPResponse, BadResponse
 from email import send_mail
 from HTTPRequest import *
 
@@ -73,45 +74,60 @@ from HTTPRequest import *
 
 class HTTPRequestHandler(object):
     @staticmethod
-    def run(proxy_server, sock):
+    def run(proxy_server, sock, addr):
+        # request_data = sock.recv(2048)
         try:
-            request_data = sock.recv(2048)
-            try:
-                req = HTTPRequest(request_data)
-            except BadRequest:
-                print("That was a bad request!")
-                return
+            req = IncomingHTTPRequest(sock)
+        except BadRequest:
+            print("That was a bad request!")
+            sock.close()
+            return
 
-            host = req.get_headers()['Host']
+        host = req.get_header('Host')
 
-            if proxy_server.is_restriction_enabled() and proxy_server.is_in_disallowed_hosts(host):
-                # send email to administrator
-                print("SENDING EMAIL!")
-                sock.close()
-                # send_mail().snd_email()
-                return
+        if proxy_server.is_restriction_enabled() and proxy_server.is_in_disallowed_hosts(host):
+            # send email to administrator
+            print("SENDING EMAIL!")
+            # sock.close()
+            # send_mail().snd_email()
+            # return
 
-            new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            new_socket.connect((host, 80))
-            new_socket.send(req.join_string().encode())
+        new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        new_socket.connect((host, 80))
+        new_socket.send(req.read())
 
-            # received_data = SocketTools.recv_all(new_socket)
-            received_data = ''
-            while True:
-                try:
-                    data = new_socket.recv(2048)
-                except socket.error as e:
-                    if e.errno != errno.ECONNRESET:
-                        raise
-                    break
-                if not data:
-                    break
-                received_data += data
+        ##########
+        response = HTTPResponse(new_socket)
+        new_socket.close()
+        ##########
+        # received_data = SocketTools.recv_all(new_socket)
+        # received_data = ''
+        # while True:
+        #     try:
+        #         data = new_socket.recv(2048)
+        #     except socket.error as e:
+        #         print("SOCKET.ERROR in RECV")
+        #         print e
+        #         if e.errno != errno.ECONNRESET:
+        #             raise
+        #         break
+        #     if not data:
+        #         break
+        #     received_data += data
 
-            new_socket.close()
-            sock.sendall(received_data)
-        except socket.timeout:
-            print("---SOCKET TIMEOUT---")
+        # print('--{0}--'.format(received_data))
+        #  Discharging user account
+        # try:
+        #     resp = HTTPResponse(received_data)
+        # except BadResponse:
+        #     new_socket.close()
+        #     sock.close()
+        #     return
+        # print "HTTP RESPONSE CREATED:"
+        # print resp
+        proxy_server.discharge_user(addr, response.length)
+
+        sock.sendall(response.read())
         sock.close()
 
 

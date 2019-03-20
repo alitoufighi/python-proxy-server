@@ -1,3 +1,4 @@
+import struct
 import sys
 import socket
 import json
@@ -19,6 +20,9 @@ class HTTPProxyServer:
         # ip_addr = '127.0.0.1' if DEBUG else socket.gethostbyname(socket.gethostname())
         # TODO: gethostbyname() doesn't return 127.0.0.1 (what to do?)
         ip_addr = '127.0.0.1'
+        # self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_LINGER,
+        #                        struct.pack('ii', 1, 0))
         self.socket.bind((ip_addr, port))
         self.socket.listen(64)
 
@@ -65,7 +69,12 @@ class HTTPProxyServer:
     def discharge_user(self, ip_addr, amount):
         for user in self.users:
             if user['IP'] == ip_addr:
-                user['volume'] = float(user['volume']) - amount  # TODO: float or int?
+                print("--user found! DISCHARGING {0} KILOBYTES".format(amount))
+                user['volume'] = int(user['volume']) - amount
+                print("--NEW HAJM: {0}".format(user['volume']))
+                return
+        else:
+            print "NO USER FOUND?!?!"
 
     @property
     def config(self):
@@ -75,7 +84,6 @@ class HTTPProxyServer:
         return self.CONFIG['restriction']['enable']
 
     def is_in_disallowed_hosts(self, host):
-        # print("-LOOKING FOR {0} IN TARGETS".format(host))
         restriction = self.CONFIG['restriction']
         # if restriction['enable'] is False:
         #     return False
@@ -87,8 +95,13 @@ class HTTPProxyServer:
 
     def run(self):
         while True:
-            (client_socket, address) = self.socket.accept()
-            thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket,))
+            (client_socket, (address, _)) = self.socket.accept()
+            if not self.is_allowed_user(address):
+                print "-Refusing Connection! Disallowed User IP Address."
+                client_socket.close()
+                return
+            print "-Connection Established."
+            thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
 
 
 if __name__ == '__main__':
