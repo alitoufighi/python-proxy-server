@@ -69,7 +69,6 @@ class HTTPResponse:
 
     def read_status(self):
         line = self.fp.readline()
-        # print("LINE IN READ STATUS RESPONSE: ---{0}---".format(line))
 
         if not line:
             raise BadResponse('not a valid line')
@@ -97,39 +96,3 @@ class HTTPResponse:
     @property
     def length(self):
         return int(self.headers['content-length']) if 'content-length' in self.headers else len(self.body)
-
-    # # OLD VERSION #################
-    # def __init__(self, raw_data):
-    #     if raw_data == '':
-    #         print("EMPTY RAW DATA RESPONSE!")
-    #         raise BadResponse()
-    #     data = raw_data.split('\r\n')
-    #     print data
-    #     self._body = ''
-    #     self._headers = {}
-    #     body_next = False
-    #     for index, item in enumerate(data):
-    #         if index == 0:
-    #             print item
-    #             self._version, self._status, self._status_str = item.split(' ', 2)
-    #         elif body_next:
-    #             self._body = item
-    #         elif item == '':
-    #             body_next = True
-    #         else:
-    #             header_type, header_value = item.split(': ')
-    #             self._headers[header_type] = header_value
-    #
-    # @property
-    # def body(self):
-    #     return None if self._body == '' else self._body
-    #
-    # def status_code(self):
-    #     return int(self._status)
-    #
-    # def __str__(self):
-    #     result = '{0} {1} {2}\r\n'.format(self._version, self._status, self._status_str)
-    #     for key, value in self._headers.items():
-    #         result += '{0}: {1}\r\n'.format(key, value)
-    #     result += '\r\n{0}\r\n'.format(self._body)
-    #     return result
