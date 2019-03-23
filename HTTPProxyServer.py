@@ -44,7 +44,9 @@ class HTTPProxyServer:
             return self.insert_str(html, insertion_text, insertion_index)
 
         def add_navbar_html(self, html):
-            insertion_index = html.find('<body>') + len('<body>')
+            i = html.find('<body')
+            insertion_index = i + html[i:].find('>') + 1
+            # regexp to find enclosing of tags
             return self.insert_str(html, self.html, insertion_index)
 
         @staticmethod
