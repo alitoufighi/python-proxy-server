@@ -1,7 +1,7 @@
 import sys
 import socket
 import json
-import thread
+import _thread
 from HTTPRequestHandler import HTTPRequestHandler
 
 DEBUG = True
@@ -11,6 +11,46 @@ CONFIG_FILENAME = 'config.json'
 
 
 class HTTPProxyServer:
+
+    class HTMLTools:
+        """
+            a tiny tool to insert a little navbar to html pages received by this proxy server
+        """
+        def __init__(self, text):
+            self.html = """\n
+                <ul class="cn-proxy">
+                    <li class="cn-proxy">
+                        <p class="cn-proxy">{0}</p>
+                    </li>
+                </ul>""".format(text)
+            self.css = open('navbar.css', 'r').read()
+
+        def add_navbar(self, html):
+            css_added = self.add_navbar_css(html)
+            html_added = self.add_navbar_html(css_added)
+            return html_added
+
+        def add_navbar_css(self, html):
+            insertion_index = html.find('</style>')
+            if insertion_index < 0:
+                insertion_index = html.find('</head>')
+                insertion_text = """\n
+                    <style>
+                        {0}
+                    </style>
+                """.format(self.css)
+            else:
+                insertion_text = self.css
+            return self.insert_str(html, insertion_text, insertion_index)
+
+        def add_navbar_html(self, html):
+            insertion_index = html.find('<body>') + len('<body>')
+            return self.insert_str(html, self.html, insertion_index)
+
+        @staticmethod
+        def insert_str(source_str, insert_str, pos):
+            return source_str[:pos] + insert_str + source_str[pos:]
+
     def __init__(self):
         self.CONFIG = self.read_config()
         self.users = self.CONFIG['accounting']['users']
@@ -62,12 +102,12 @@ class HTTPProxyServer:
         return False
 
     def discharge_user(self, ip_addr, amount):
+        if amount is None:
+            return
         for user in self.users:
             if user['IP'] == ip_addr:
                 user['volume'] = int(user['volume']) - amount
                 return
-        else:
-            print "NO USER FOUND!"
 
     def has_charge(self, ip_addr):
         for user in self.users:
@@ -92,6 +132,9 @@ class HTTPProxyServer:
                 return True
         return False
 
+    def body_inject(self, html):
+        return HTTPProxyServer.HTMLTools(self.http_injection_body).add_navbar(html)
+
     def run(self):
         while True:
             (client_socket, (address, _)) = self.socket.accept()
@@ -102,8 +145,8 @@ class HTTPProxyServer:
             if not self.has_charge(address):
                 print("-Refusing Connection! User Has No Charge.")
                 return
-            print "-Connection Established."
-            thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
+            print("-Connection Established.")
+            _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
 
 
 if __name__ == '__main__':
