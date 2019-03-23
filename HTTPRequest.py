@@ -8,6 +8,9 @@ class BadRequest(Exception):
 
 
 class IncomingHTTPRequest:
+
+    DEFAULT_ENCODING = "iso-8859-1"
+
     def __init__(self, sock):
         self.socket = sock
         self.fp = sock.makefile('rb', 0)
@@ -18,14 +21,21 @@ class IncomingHTTPRequest:
 
         self.modify_values_for_proxy()
 
-        print('------------------BEG OF REQUEST----------------')
-        print(self.method, self.route, self.version)
-        print(self.headers)
+        # print('------------------BEG OF REQUEST----------------')
+        # print(self.method, self.route, self.version)
+        # print(self.headers)
         # print(self.body)
-        print('------------------END OF REQUEST----------------')
+        # print('------------------END OF REQUEST----------------')
+
+    def remove_accept_gzip_encoding(self):
+        if not ('accept-encoding' in self.headers):
+            return
+        accept_encodings = self.headers['accept-encoding']
+        accept_encodings = accept_encodings.replace('gzip', '')
+        self.headers['accept-encoding'] = accept_encodings.strip(', ')
 
     def read_status(self):
-        line = self.fp.readline()
+        line = self.fp.readline().decode(IncomingHTTPRequest.DEFAULT_ENCODING)
         if not line:
             raise BadRequest('not a valid line')
         method, route, version = line.split(None, 2)
@@ -35,16 +45,8 @@ class IncomingHTTPRequest:
     def read_headers(self):
         headers = {}
         while True:
-            line = self.fp.readline()
-            # line = line.strip()
-            # print('--{0}--'.format(line))
-            if line == '':
-                print "EMPTY LINE!!!!! EOF?"
-            if not line:
-                print("wth")
-                break
+            line = self.fp.readline().decode(IncomingHTTPRequest.DEFAULT_ENCODING)
             if self.is_last_header(line):
-                # print line, len(line)
                 break
             try:
                 key, value = self.extract_header(line)
@@ -72,15 +74,11 @@ class IncomingHTTPRequest:
 
     def read_body(self):
         data = ''
-        # according to:
-        # https://www.ibm.com/support/knowledgecenter/en/SSFKSJ_9.0.0/com.ibm.mq.ref.dev.doc/q110660_.htm
         if self.length > 0:
             try:
-                # data = self.fp.read()
-                data = self.socket.recv(2048)  # up to 2kB body size
+                data = self.fp.read().decode(IncomingHTTPRequest.DEFAULT_ENCODING)
             except socket.error:
-                print("Raise in read_body")
-                raise
+                raise BadRequest('socket error in read_body')
         return data
 
     def modify_values_for_proxy(self):
@@ -89,15 +87,15 @@ class IncomingHTTPRequest:
         i = self.route.find(self.headers['host']) + len(self.headers['host'])
         self.route = self.route[i:]
         if self.route == '':
-
             self.route = '/'
+        self.remove_accept_gzip_encoding()
 
     def read(self):
         result = '{0} {1} {2}\r\n'.format(self.method, self.route, self.version)
         for key, value in self.headers.items():
             result += '{0}: {1}\r\n'.format(key, value)
         result += '\r\n{0}\r\n'.format(self.body)
-        return result
+        return result.encode(IncomingHTTPRequest.DEFAULT_ENCODING)
 
     @property
     def length(self):
