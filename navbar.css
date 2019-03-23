@@ -1,0 +1,28 @@
+ul.cn-proxy {
+    list-style-type: none;
+    z-index: 999;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+li.cn-proxy {
+    direction: rtl;
+    float: right;
+}
+
+li p.cn-proxy {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 10px 70px;
+    text-decoration: none;
+}
+
+li p:hover.cn-proxy {
+    background-color: #111;
+}
