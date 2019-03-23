@@ -2,9 +2,10 @@ from HTTPResponse import *
 from HTTPRequest import *
 # from email import send_mail
 
-HTTP_SERVER_LISTENING_PORT = 80
 
 class HTTPRequestHandler(object):
+    HTTP_SERVER_LISTENING_PORT = 80
+
     @staticmethod
     def run(proxy_server, sock, addr):
         try:
@@ -17,21 +18,28 @@ class HTTPRequestHandler(object):
         host = req.get_header('Host')
 
         if proxy_server.is_restriction_enabled() and proxy_server.is_in_disallowed_hosts(host):
-            # send email to administrator
-            print("SENDING EMAIL!")
+            # Send Email to Administrator
+            print("-Sending Email to Admin!")
+
+            # Uncomment lines below to make it functional
             # sock.close()
             # send_mail().snd_email()
             # return
 
         if proxy_server.is_privacy_enabled():
+            # Privacy Mechanism
             req.set_header('user-agent', proxy_server.privacy_user_agent)
 
-        new_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        new_socket.connect((host, HTTP_SERVER_LISTENING_PORT))
-        new_socket.send(req.read())
+        server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server_socket.connect((host, HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT))
+        server_socket.send(req.read())
 
-        response = HTTPResponse(new_socket)
-        new_socket.close()
+        response = HTTPResponse(server_socket)
+        server_socket.close()
+
+        if response.is_html() and proxy_server.is_http_injection_enabled():
+            # HTTP-Injection
+            response.body = proxy_server.body_inject(response.body)
 
         proxy_server.discharge_user(addr, response.length)
 
