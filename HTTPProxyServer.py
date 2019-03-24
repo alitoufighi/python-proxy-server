@@ -3,9 +3,9 @@ import socket
 import json
 import _thread
 from HTTPRequestHandler import HTTPRequestHandler
+from HTTPResponse import RawHTTPResponse
 
 DEBUG = True
-
 PORT = int(sys.argv[1]) if DEBUG else 8000
 CONFIG_FILENAME = 'config.json'
 
@@ -17,12 +17,12 @@ class HTTPProxyServer:
             a tiny tool to insert a little navbar to html pages received by this proxy server
         """
         def __init__(self, text):
-            self.html = """\n
+            self.html = f"""\n
                 <ul class="cn-proxy">
                     <li class="cn-proxy">
-                        <p class="cn-proxy">{0}</p>
+                        <p class="cn-proxy">{text}</p>
                     </li>
-                </ul>""".format(text)
+                </ul>"""
             self.css = open('navbar.css', 'r').read()
 
         def add_navbar(self, html):
@@ -34,11 +34,11 @@ class HTTPProxyServer:
             insertion_index = html.find('</style>')
             if insertion_index < 0:
                 insertion_index = html.find('</head>')
-                insertion_text = """\n
+                insertion_text = f"""\n
                     <style>
-                        {0}
+                        {self.css}
                     </style>
-                """.format(self.css)
+                """
             else:
                 insertion_text = self.css
             return self.insert_str(html, insertion_text, insertion_index)
@@ -46,7 +46,6 @@ class HTTPProxyServer:
         def add_navbar_html(self, html):
             i = html.find('<body')
             insertion_index = i + html[i:].find('>') + 1
-            # regexp to find enclosing of tags
             return self.insert_str(html, self.html, insertion_index)
 
         @staticmethod
@@ -60,7 +59,7 @@ class HTTPProxyServer:
         port = PORT if DEBUG else self.CONFIG['port']
         ip_addr = '127.0.0.1'
         self.socket.bind((ip_addr, port))
-        print("-Starting proxy server on {0}:{1}".format(ip_addr, port))
+        print(f"-Starting proxy server on {ip_addr}:{port}")
         self.socket.listen(64)
 
     def is_logging_enabled(self):
@@ -97,6 +96,24 @@ class HTTPProxyServer:
             cfg = json.load(f)
         return cfg
 
+    def bad_response(self, message):
+        from email.utils import formatdate
+        from string import Template
+        version = 'HTTP/1.0'
+        status = 403
+        reason = 'Forbidden'
+
+        body = open('bad.html', 'r').read()
+        body = Template(body).substitute(message=message)
+        headers = {
+            'Date': formatdate(timeval=None, localtime=False, usegmt=True),
+            'Content-Type': 'text/html; charset=utf-8',
+            'Content-Length': len(body),
+        }
+
+        return RawHTTPResponse(version=version, status=status,
+                               reason=reason, headers=headers, body=body)
+
     def is_allowed_user(self, ip_addr):
         for user in self.users:
             if ip_addr == user['IP']:
@@ -126,8 +143,6 @@ class HTTPProxyServer:
 
     def is_in_disallowed_hosts(self, host):
         restriction = self.CONFIG['restriction']
-        # if restriction['enable'] is False:
-        #     return False
         targets = restriction['targets']
         for target in targets:
             if target['notify'] is True and host in target['URL']:
@@ -142,13 +157,15 @@ class HTTPProxyServer:
             (client_socket, (address, _)) = self.socket.accept()
             if not self.is_allowed_user(address):
                 print("-Refusing Connection! Disallowed User IP Address.")
+                client_socket.sendall(self.bad_response('Your IP address is not valid.').read())
                 client_socket.close()
-                return
-            if not self.has_charge(address):
+            elif not self.has_charge(address):
                 print("-Refusing Connection! User Has No Charge.")
-                return
-            print("-Connection Established.")
-            _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
+                client_socket.sendall(self.bad_response('Please recharge your account :)').read())
+                client_socket.close()
+            else:
+                print("-Connection Established.")
+                _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
 
 
 if __name__ == '__main__':
