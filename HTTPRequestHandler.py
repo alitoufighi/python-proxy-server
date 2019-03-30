@@ -14,11 +14,10 @@ class HTTPRequestHandler(object):
         host = request.get_header('Host')
 
         if proxy_server.is_restriction_enabled() and proxy_server.is_in_disallowed_hosts(host):
-            logging.info('-Sending Email to Admin!')
-            #print("-Sending Email to Admin!")
+            logging.info('Bad website! Sending Email to admin.')
             sock.sendall(proxy_server.bad_response('Visiting this site is forbidden!').read())
-            logging.info('Socket closed.')
             sock.close()
+            logging.info('Socket connection with peer closed.')
             # send_mail().snd_email()
             return
 
@@ -26,18 +25,22 @@ class HTTPRequestHandler(object):
             request.set_header('user-agent', proxy_server.privacy_user_agent)
 
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        logging.info('Socket creating...')
         server_socket.connect((host, HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT))
-        logging.info('Socket connecting to port = ???')
+        logging.info(f'Connection established with host {host}'
+                     f'on port {HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT}.')
         server_socket.send(request.read())
-        logging.info(result)
+        logging.info('Request sent to server.')
         response = HTTPResponse(server_socket)
+        logging.info('Response read from server.')
         server_socket.close()
+        logging.info('Connection with server host closed.')
 
         if response.is_html() and proxy_server.is_http_injection_enabled():
-            response.body = proxy_server.body_inject(response.body)
+            response = proxy_server.body_inject(response)
+            logging.info('Response injected with CN-Proxy(TM) navbar.')
 
         proxy_server.discharge_user(addr, response.length)
 
         sock.sendall(response.read())
+        logging.info('Response sent back to client.')
         sock.close()

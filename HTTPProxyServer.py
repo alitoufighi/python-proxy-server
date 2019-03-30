@@ -57,6 +57,10 @@ class HTTPProxyServer:
     def __init__(self):
         self.CONFIG = self.read_config()
         self.users = self.CONFIG['accounting']['users']
+        logging.basicConfig(format='[%(asctime)s] %(message)s',
+                            datefmt='%d/%m/%Y %I:%M:%S %p',
+                            level=logging.INFO,
+                            filename=self.log_file)
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         port = PORT if DEBUG else self.CONFIG['port']
         ip_addr = '127.0.0.1'
@@ -99,7 +103,6 @@ class HTTPProxyServer:
         return cfg
 
     def bad_response(self, message):
-        from email.utils import formatdate
         from string import Template
         version = 'HTTP/1.0'
         status = 403
@@ -108,7 +111,6 @@ class HTTPProxyServer:
         body = open('bad.html', 'r').read()
         body = Template(body).substitute(message=message)
         headers = {
-            'Date': formatdate(timeval=None, localtime=False, usegmt=True),
             'Content-Type': 'text/html; charset=utf-8',
             'Content-Length': len(body),
         }
@@ -128,6 +130,7 @@ class HTTPProxyServer:
         for user in self.users:
             if user['IP'] == ip_addr:
                 user['volume'] = int(user['volume']) - amount
+                logging.info(f'Discharging {amount} bytes from {ip_addr}')
                 return
 
     def has_charge(self, ip_addr):
@@ -151,41 +154,40 @@ class HTTPProxyServer:
                 return True
         return False
 
-    def body_inject(self, html):
-        return HTTPProxyServer.HTMLTools(self.http_injection_body).add_navbar(html)
+    def body_inject(self, response):
+        response.body = HTTPProxyServer.HTMLTools(self.http_injection_body).add_navbar(response.body)
+        response.headers['content-length'] = len(response.body)
+        return response
 
-    def check_log(self):
-        logging = self.CONFIG['logging']
-        enable = self.CONFIG['enable']
-        if enable == True:
-            filename = self.CONFIG['logFile']
-            self.file = open(filename, 'r')
-            
-            
+    # def check_log(self):
+    #     logging = self.CONFIG['logging']
+    #     enable = logging['enable']
+    #     if enable:
+    #         filename = logging['logFile']
+    #         self.file = open(filename, 'r')
 
     def run(self):
-        self.check_log()
-        logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+        # self.check_log()
         logging.info('Proxy launched')
         while True:
-            (client_socket, (address, _)) = self.socket.accept()
-            logging.info('Creating server socket...')
-            if not self.is_allowed_user(address):
-                logging.info('-Refusing Connection! Disallowed User IP Address.')
-                #print("-Refusing Connection! Disallowed User IP Address.")
-                client_socket.sendall(self.bad_response('Your IP address is not valid.').read())
-                logging.info('Socket closed.')
-                client_socket.close()
-            elif not self.has_charge(address):
-                logging.info('-Refusing Connection! User Has No Charge.')
-                #print("-Refusing Connection! User Has No Charge.")
-                client_socket.sendall(self.bad_response('Please recharge your account :)').read())
-                logging.info('Socket closed.')
-                client_socket.close()
-            else:
-                logging.info('-Connection Established.')
-                #print("-Connection Established.")
-                _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
+            try:
+                (client_socket, (address, _)) = self.socket.accept()
+                logging.info('Creating server socket...')
+                if not self.is_allowed_user(address):
+                    logging.info('Refusing Connection! Disallowed User IP Address.')
+                    client_socket.sendall(self.bad_response('Your IP address is not valid.').read())
+                    client_socket.close()
+                    logging.info('Socket closed.')
+                elif not self.has_charge(address):
+                    logging.info('Refusing Connection! User Has No Charge.')
+                    client_socket.sendall(self.bad_response('Please recharge your account :)').read())
+                    client_socket.close()
+                    logging.info('Socket closed.')
+                else:
+                    logging.info('New Connection Established.')
+                    _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
+            except KeyboardInterrupt:
+                self.socket.close()
 
 
 if __name__ == '__main__':
