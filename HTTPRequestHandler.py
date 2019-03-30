@@ -8,10 +8,9 @@ class HTTPRequestHandler(object):
     HTTP_SERVER_LISTENING_PORT = 80
 
     @staticmethod
-    def run(proxy_server, sock, addr, file):
+    def run(proxy_server, sock, addr):
         
-        request = HTTPRequest(sock, file)
-        logging.basicConfig(filename= file,format='[%(asctime)s] %(message)s', level=logging.INFO)
+        request = HTTPRequest(sock)
         host = request.get_header('Host')
 
         if proxy_server.is_restriction_enabled() and proxy_server.is_in_disallowed_hosts(host):

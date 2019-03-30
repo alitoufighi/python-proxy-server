@@ -11,9 +11,8 @@ class HTTPRequest:
 
     DEFAULT_ENCODING = "iso-8859-1"
 
-    def __init__(self, sock, file):
+    def __init__(self, sock):
         self.socket = sock
-        self.file=file
         self.fp = sock.makefile('rb', 0)
         self.method, self.route, self.version = self._read_status()
         self.headers = self._read_headers()
@@ -96,7 +95,6 @@ class HTTPRequest:
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
         result += f'\r\n{self.body}\r\n'
-        logging.basicConfig(filename=self.file,format='[%(asctime)s] %(message)s', level=logging.INFO)
         logging.info(result)
         return result.encode(HTTPRequest.DEFAULT_ENCODING)
 
