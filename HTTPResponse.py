@@ -76,7 +76,6 @@ class HTTPResponse(RawHTTPResponse):
 
     def __init__(self, sock):
         RawHTTPResponse.__init__(self)
-
         self.socket = sock
         self.fp = sock.makefile('rb', 0)
 
