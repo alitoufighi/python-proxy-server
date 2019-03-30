@@ -1,0 +1,83 @@
+[2019-03-30 18:32:47,261] Proxy launched
+[2019-03-30 18:32:58,507] Creating server socket...
+[2019-03-30 18:32:58,507] -Connection Established.
+[2019-03-30 18:32:58,509] Socket creating...
+[2019-03-30 18:33:00,630] Socket connecting to port = ???
+[2019-03-30 18:33:00,631] GET / HTTP/1.0
+host: jabama.ir
+user-agent: CN Proxy Server (v1.0.0)
+accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8
+accept-language: en-US,en;q=0.5
+accept-encoding: ['deflate']
+connection: keep-alive
+upgrade-insecure-requests: 1
+
+
+
+[2019-03-30 18:33:05,476] Creating server socket...
+[2019-03-30 18:33:05,476] -Connection Established.
+[2019-03-30 18:33:15,857] Creating server socket...
+[2019-03-30 18:33:15,857] -Connection Established.
+[2019-03-30 18:33:16,072] Creating server socket...
+[2019-03-30 18:33:16,072] -Connection Established.
+[2019-03-30 18:33:22,566] HTTP/1.0 301 Moved Permanently
+server: openresty
+date: Sat, 30 Mar 2019 14:03:03 GMT
+content-type: text/html
+content-length: 182
+connection: keep-alive
+location: https://www.jabama.com
+
+<html>
+<head><title>301 Moved Permanently</title>
+
+                    <style>
+                        ul.cn-proxy {
+    list-style-type: none;
+    z-index: 999;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+    position: fixed;
+    top: 0;
+    width: 100%;
+}
+
+li.cn-proxy {
+    direction: rtl;
+    float: right;
+}
+
+li p.cn-proxy {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 10px 70px;
+    text-decoration: none;
+}
+
+li p:hover.cn-proxy {
+    background-color: #111;
+}
+
+                    </style>
+                </head>
+<body bgcolor="white">
+
+                <ul class="cn-proxy">
+                    <li class="cn-proxy">
+                        <p class="cn-proxy">پروژه 2 درس شبکه های کامپیوتری</p>
+                    </li>
+                </ul>
+<center><h1>301 Moved Permanently</h1></center>
+<hr><center>openresty</center>
+</body>
+</html>
+
+
+[2019-03-30 18:33:24,044] Creating server socket...
+[2019-03-30 18:33:24,044] -Connection Established.
+[2019-03-30 18:33:39,346] Creating server socket...
+[2019-03-30 18:33:39,346] -Connection Established.
+g

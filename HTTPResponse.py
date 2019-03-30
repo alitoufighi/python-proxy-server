@@ -7,7 +7,8 @@ class BadResponse(Exception):
 
 class RawHTTPResponse:
     
-    def __init__(self, version=None, status=None, reason=None, headers=None, body=''):
+    def __init__(self, version=None, status=None, reason=None, headers=None, body='', file=None):
+        self.file = file
         self.version = version
         self.status = status
         self.reason = reason
@@ -40,7 +41,7 @@ class RawHTTPResponse:
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
         result += f'\r\n{self.body}\r\n'
-        logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+        logging.basicConfig(filename=self.file,format='[%(asctime)s] %(message)s', level=logging.INFO)
         logging.info(result)
         return result.encode(self.encoding)
 
@@ -61,9 +62,9 @@ class HTTPResponse(RawHTTPResponse):
 
     DEFAULT_ENCODING = "iso-8859-1"
 
-    def __init__(self, sock):
+    def __init__(self, sock, file):
         RawHTTPResponse.__init__(self)
-
+        self.file =file
         self.socket = sock
         self.fp = sock.makefile('rb', 0)
 

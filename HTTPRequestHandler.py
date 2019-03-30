@@ -8,9 +8,10 @@ class HTTPRequestHandler(object):
     HTTP_SERVER_LISTENING_PORT = 80
 
     @staticmethod
-    def run(proxy_server, sock, addr):
-        request = HTTPRequest(sock)
-        logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+    def run(proxy_server, sock, addr, file):
+        
+        request = HTTPRequest(sock, file)
+        logging.basicConfig(filename= file,format='[%(asctime)s] %(message)s', level=logging.INFO)
         host = request.get_header('Host')
 
         if proxy_server.is_restriction_enabled() and proxy_server.is_in_disallowed_hosts(host):
@@ -30,8 +31,8 @@ class HTTPRequestHandler(object):
         server_socket.connect((host, HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT))
         logging.info('Socket connecting to port = ???')
         server_socket.send(request.read())
-        logging.info(result)
-        response = HTTPResponse(server_socket)
+        #logging.info(result)
+        response = HTTPResponse(server_socket, file)
         server_socket.close()
 
         if response.is_html() and proxy_server.is_http_injection_enabled():

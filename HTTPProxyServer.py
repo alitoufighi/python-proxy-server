@@ -156,16 +156,16 @@ class HTTPProxyServer:
 
     def check_log(self):
         logging = self.CONFIG['logging']
-        enable = self.CONFIG['enable']
+        enable = logging['enable']
         if enable == True:
-            filename = self.CONFIG['logFile']
-            self.file = open(filename, 'r')
+            self.filename = logging['logFile']
+            self.file = open(self.filename, "w")
             
             
 
     def run(self):
         self.check_log()
-        logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
+        logging.basicConfig(filename = self.filename,format='[%(asctime)s] %(message)s', level=logging.INFO)
         logging.info('Proxy launched')
         while True:
             (client_socket, (address, _)) = self.socket.accept()
@@ -185,7 +185,7 @@ class HTTPProxyServer:
             else:
                 logging.info('-Connection Established.')
                 #print("-Connection Established.")
-                _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
+                _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,self.filename,))
 
 
 if __name__ == '__main__':
