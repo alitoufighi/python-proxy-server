@@ -1,4 +1,6 @@
 import logging
+
+
 class BadResponse(Exception):
     def __init__(self, msg):
         Exception.__init__(self)
@@ -31,17 +33,28 @@ class RawHTTPResponse:
                 return charset
         return 'utf-8'
 
+    def _set_html_encoding(self, encoding):
+        content_type = self.headers['content-type'].lower().split(';')
+        content_type = [s.strip() for s in content_type]
+        for index, item in enumerate(content_type):
+            if 'charset' in item:
+                i = item.find('=')
+                content_type[index] = item.replace(item[i+1:], encoding)
+                break
+        self.headers['content-type'] = "; ".join(content_type)
+
     def is_html(self):
         return 'text/html' in self.headers['content-type'] if\
             ('content-type' in self.headers) else False
 
     def read(self):
+        if self.is_html():
+            self._set_html_encoding('utf-8')
+
         result = f'{self.version} {self.status} {self.reason}\r\n'
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
         result += f'\r\n{self.body}\r\n'
-        logging.basicConfig(format='[%(asctime)s] %(message)s', level=logging.INFO)
-        logging.info(result)
         return result.encode(self.encoding)
 
     @property
@@ -94,7 +107,7 @@ class HTTPResponse(RawHTTPResponse):
         while True:
             line = self.fp.readline().decode(HTTPResponse.DEFAULT_ENCODING)
             if not line:
-                print("bmiri")
+                print("bmiri-bi adab")
                 break
             if self._is_last_header(line):
                 break
