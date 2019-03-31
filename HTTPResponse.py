@@ -55,6 +55,7 @@ class RawHTTPResponse:
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
         result += f'\r\n{self.body}\r\n'
+        logging.info(result)
         return result.encode(self.encoding)
 
     @property
