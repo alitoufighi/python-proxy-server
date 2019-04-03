@@ -50,11 +50,22 @@ class RawHTTPResponse:
     def read(self):
         if self.is_html():
             self._set_html_encoding('utf-8')
-
+        self.pragma = None
+        self.expire = None
+        self.modified_since = None
         result = f'{self.version} {self.status} {self.reason}\r\n'
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
+            if key == "pragma":
+                self.pragma = value
+            if key == "Expire":
+                self.expire = value
+            if key == "last-modified":
+                self.modified_since = value
+
         result += f'\r\n{self.body}\r\n'
+        
+        #logging.info(result)
         return result.encode(self.encoding)
 
     @property

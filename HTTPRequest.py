@@ -90,14 +90,18 @@ class HTTPRequest:
             self.route = '/'
         self.remove_accept_gzip_encoding()
 
+    
     def read(self):
         result = f'{self.method} {self.route} {self.version}\r\n'
+    
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
+
         result += f'\r\n{self.body}\r\n'
+        #logging.info("request")
         logging.info(result)
         return result.encode(HTTPRequest.DEFAULT_ENCODING)
-
+    
     @property
     def length(self):
         return int(self.headers['content-length']) if 'content-length' in self.headers else 0

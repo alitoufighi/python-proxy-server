@@ -159,15 +159,7 @@ class HTTPProxyServer:
         response.headers['content-length'] = len(response.body)
         return response
 
-    # def check_log(self):
-    #     logging = self.CONFIG['logging']
-    #     enable = logging['enable']
-    #     if enable:
-    #         filename = logging['logFile']
-    #         self.file = open(filename, 'r')
-
-    def run(self):
-        # self.check_log()
+    def run(self):        
         logging.info('Proxy launched')
         while True:
             try:
