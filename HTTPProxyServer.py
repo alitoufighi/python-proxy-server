@@ -5,6 +5,7 @@ import _thread
 import logging
 from HTTPRequestHandler import HTTPRequestHandler
 from HTTPResponse import RawHTTPResponse
+from cache import *
 
 
 DEBUG = True
@@ -67,6 +68,7 @@ class HTTPProxyServer:
         self.socket.bind((ip_addr, port))
         print(f"-Starting proxy server on {ip_addr}:{port}")
         self.socket.listen(64)
+        self.cache_handler = CacheHandler()
 
     def is_logging_enabled(self):
         return self.CONFIG['logging']['enable']

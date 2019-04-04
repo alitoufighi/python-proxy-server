@@ -53,18 +53,18 @@ class RawHTTPResponse:
         self.pragma = None
         self.expire = None
         self.modified_since = None
+        
         result = f'{self.version} {self.status} {self.reason}\r\n'
         for key, value in self.headers.items():
             result += f'{key}: {value}\r\n'
-            if key == "pragma":
-                self.pragma = value
-            if key == "Expire":
+            if key == "pragma" or key == "cache-control":
+                self.pragma = value    
+            if key == "expires":
                 self.expire = value
             if key == "last-modified":
                 self.modified_since = value
 
         result += f'\r\n{self.body}\r\n'
-        
         #logging.info(result)
         return result.encode(self.encoding)
 
@@ -117,7 +117,6 @@ class HTTPResponse(RawHTTPResponse):
         while True:
             line = self.fp.readline().decode(HTTPResponse.DEFAULT_ENCODING)
             if not line:
-                print("bmiri-bi adab")
                 break
             if self._is_last_header(line):
                 break
@@ -133,6 +132,7 @@ class HTTPResponse(RawHTTPResponse):
 
     def _read_status(self):
         line = self.fp.readline().decode(HTTPResponse.DEFAULT_ENCODING)
+        print(line+"line")
         if not line:
             raise BadResponse('not a valid line')
         try:
