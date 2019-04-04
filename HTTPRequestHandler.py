@@ -1,8 +1,8 @@
 import logging
 from HTTPResponse import *
 from HTTPRequest import *
+from mail import SendMail
 
-# from mail import send_mail
 
 
 class HTTPRequestHandler(object):
@@ -19,7 +19,7 @@ class HTTPRequestHandler(object):
             sock.sendall(proxy_server.bad_response('Visiting this site is forbidden!').read())
             sock.close()
             logging.info('Socket connection with peer closed.')
-            # send_mail().snd_email()
+            SendMail().snd_email(request.read().decode(request.DEFAULT_ENCODING))
             return
 
         if proxy_server.is_privacy_enabled():
