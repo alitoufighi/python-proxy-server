@@ -4,7 +4,7 @@ import datetime
 from HTTPRequest import HTTPRequest
 from HTTPResponse import HTTPResponse
 
-CAPACITY = 101
+CAPACITY = 100
 
 class Cache:
     def __init__(self, packet, pragma, modifiedsince, expire, host):
@@ -64,7 +64,7 @@ class CacheHandler:
             
                     
     def store(self, packet, pragma, modifiedsince, expire, host):
-        if len(self.cachelist) > 100:
+        if len(self.cachelist) > CAPACITY:
             self.cachelist.remove(0)
         if pragma == "no-cache":
             return False
