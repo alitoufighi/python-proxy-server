@@ -1,6 +1,7 @@
 import socket
 import logging
 
+
 class BadRequest(Exception):
     def __init__(self, msg):
         Exception.__init__(self)
@@ -90,7 +91,6 @@ class HTTPRequest:
             self.route = '/'
         self.remove_accept_gzip_encoding()
 
-    
     def read(self):
         result = f'{self.method} {self.route} {self.version}\r\n'
     
@@ -98,7 +98,6 @@ class HTTPRequest:
             result += f'{key}: {value}\r\n'
 
         result += f'\r\n{self.body}\r\n'
-        #logging.info("request")
         logging.info(result)
         return result.encode(HTTPRequest.DEFAULT_ENCODING)
     

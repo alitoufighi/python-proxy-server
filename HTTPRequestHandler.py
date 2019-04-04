@@ -4,7 +4,6 @@ from HTTPRequest import *
 from mail import SendMail
 
 
-
 class HTTPRequestHandler(object):
     HTTP_SERVER_LISTENING_PORT = 80
 
@@ -24,9 +23,8 @@ class HTTPRequestHandler(object):
 
         if proxy_server.is_privacy_enabled():
             request.set_header('user-agent', proxy_server.privacy_user_agent)
-        proxy_server.cache_handler.set_port( HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT, sock)
+        proxy_server.cache_handler.set_port(HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT, sock)
         if not proxy_server.cache_handler._find_cache(host, request.method, request.route, request.version):
-
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((host, HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT))
             logging.info(f'Connection established with host {host}'

@@ -65,7 +65,6 @@ class RawHTTPResponse:
                 self.modified_since = value
 
         result += f'\r\n{self.body}\r\n'
-        #logging.info(result)
         return result.encode(self.encoding)
 
     @property
