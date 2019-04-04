@@ -6,7 +6,7 @@ from HTTPResponse import HTTPResponse
 
 CAPACITY = 100
 
-class Cache:
+class CachedObject:
     def __init__(self, packet, pragma, modifiedsince, expire, host, route):
         self.response = packet
         self.modifiedsince = modifiedsince
@@ -52,7 +52,7 @@ class CacheHandler:
         else:
             print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1")
             logging.info("200 returned from server")
-            c = Cache(data, response.pragma, response.modified_since, response.expire, host)#here
+            c = CachedObject(data, response.pragma, response.modified_since, response.expire, host)#here
             self.cachelist.remove(cache)
             self.cachelist.append(c)
             self.sock.sendall(c.response)
@@ -88,7 +88,7 @@ class CacheHandler:
             self.cachelist.remove(0)
         if pragma == "no-cache":
             return False
-        res_pkt = Cache(packet, pragma, modifiedsince, expire, host, route)
+        res_pkt = CachedObject(packet, pragma, modifiedsince, expire, host, route)
         self.cachelist.append(res_pkt)
        
         

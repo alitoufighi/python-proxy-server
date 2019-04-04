@@ -30,12 +30,11 @@ class HTTPRequestHandler(object):
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((host, HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT))
             logging.info(f'Connection established with host {host}'
-                        f'on port {HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT}.')
+                         f'on port {HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT}.')
             server_socket.send(request.read())
             logging.info('Request sent to server.')
             response = HTTPResponse(server_socket)
             logging.info('Response read from server.')
-            proxy_server.cache_handler.set_sockets( server_socket)
             logging.info('Connection with server host closed.')
             if response.is_html() and proxy_server.is_http_injection_enabled():
                 response = proxy_server.body_inject(response)
@@ -43,7 +42,9 @@ class HTTPRequestHandler(object):
             proxy_server.discharge_user(addr, response.length)
             res = response.read()
             sock.sendall(res)
-            proxy_server.cache_handler.store(res, response.pragma, response.modified_since, response.expire, host, request.route)
+            if proxy_server.is_caching_enabled():
+                proxy_server.cache_handler.set_sockets(server_socket)
+                proxy_server.cache_handler.store(res, response.pragma, response.modified_since, response.expire, host, request.route)
             logging.info('Response sent back to client.')
-            sock.close()
             server_socket.close()
+        sock.close()
