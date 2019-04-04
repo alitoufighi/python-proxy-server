@@ -63,7 +63,7 @@ class HTTPRequest:
             accept_encodings.remove('gzip')
         except ValueError:
             pass
-        self.headers['accept-encoding'] = accept_encodings
+        self.headers['accept-encoding'] = ", ".join(accept_encodings)
 
     def set_header(self, key, val):
         self.headers[key.lower()] = val.strip()

@@ -131,7 +131,6 @@ class HTTPResponse(RawHTTPResponse):
 
     def _read_status(self):
         line = self.fp.readline().decode(HTTPResponse.DEFAULT_ENCODING)
-        print(line+"line")
         if not line:
             raise BadResponse('not a valid line')
         try:

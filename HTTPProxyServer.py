@@ -163,8 +163,8 @@ class HTTPProxyServer:
 
     def run(self):        
         logging.info('Proxy launched')
-        while True:
-            try:
+        try:
+            while True:
                 (client_socket, (address, _)) = self.socket.accept()
                 logging.info('Creating server socket...')
                 if not self.is_allowed_user(address):
@@ -180,8 +180,8 @@ class HTTPProxyServer:
                 else:
                     logging.info('New Connection Established.')
                     _thread.start_new_thread(HTTPRequestHandler.run, (self, client_socket, address,))
-            except KeyboardInterrupt:
-                self.socket.close()
+        except KeyboardInterrupt:
+            self.socket.close()
 
 
 if __name__ == '__main__':
