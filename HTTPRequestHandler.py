@@ -23,11 +23,10 @@ class HTTPRequestHandler(object):
 
         if proxy_server.is_privacy_enabled():
             request.set_header('user-agent', proxy_server.privacy_user_agent)
-        proxy_server.cache_handler.set_port(HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT, sock)
-        if not proxy_server.cache_handler._find_cache(host, request.method, request.route, request.version):
+        if not proxy_server.cache_handler.is_cached(host, request.method, request.route, request.version, sock):
             server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             server_socket.connect((host, HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT))
-            logging.info(f'Connection established with host {host}'
+            logging.info(f'Connection established with host {host} '
                          f'on port {HTTPRequestHandler.HTTP_SERVER_LISTENING_PORT}.')
             server_socket.send(request.read())
             logging.info('Request sent to server.')
@@ -41,8 +40,8 @@ class HTTPRequestHandler(object):
             res = response.read()
             sock.sendall(res)
             if proxy_server.is_caching_enabled():
-                proxy_server.cache_handler.set_sockets(server_socket)
                 proxy_server.cache_handler.store(res, response.pragma, response.modified_since, response.expire, host, request.route)
             logging.info('Response sent back to client.')
             server_socket.close()
+
         sock.close()
